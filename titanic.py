@@ -144,7 +144,7 @@ average_fare.plot(yerr=std_fare,kind='bar',legend=False)
 train_data['Has_Cabin']=train_data['Cabin'].apply(lambda x:0 if x=='U0' else 1)
 train_data[['Has_Cabin','Survived']].groupby('Has_Cabin').mean().plot.bar()
 #对不同类型的船舱进行分析
-
+#使用Factorize处理多变量
 train_data['Cabinlevel']=train_data['Cabin'].map(lambda x:re.compile('([a-zA-Z]+)').search(x).group())
 train_data['Cabinlevel']=pd.factorize(train_data['Cabinlevel'])[0]
 train_data[['Cabinlevel','Survived']].groupby('Cabinlevel').mean().plot.bar()
@@ -156,3 +156,20 @@ sns.factorplot('Embarked','Survived',data=train_data,size=3,aspect=2)
 plt.title('Embarked and Survived rate')
 
 address='https://blog.csdn.net/Koala_Tree/article/details/78725881'
+
+#定性转换船舱,使用get_dummies方法
+embark_dummies=pd.get_dummies(train_data['Embarked'])
+train_data=train_data.join(embark_dummies)
+train_data.drop(['Embarked'],axis=1,inplace=True)
+#定量转换，将很大范围的数值映射到小范围内
+from sklearn import preprocessing
+#将Age转到（-1，1）之间
+scaler=preprocessing.StandardScaler()
+train_data['Age_scaled']=scaler.fit_transform(train_data['Age'].values.reshape(-1,1),)
+
+#将连续数据离散化
+#将Fare离散为5部分
+train_data['Fare_bin']=pd.qcut(train_data['Fare'],5)
+#将离散化后的数据factorize化
+train_data['Fare_bin_id']=pd.factorize(train_data['Fare_bin'])[0]
+train_data['Fare_bin_id'].head()
